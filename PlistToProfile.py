@@ -3,7 +3,6 @@
 # PlistToProfile.py
 # Simple utility to assist with creating Profiles from generic plists
 
-import sys
 import os
 import argparse
 from uuid import uuid4
@@ -104,10 +103,6 @@ and defaults to 'Never'""")
         help="""Payload identifier. This is what is used to uniquely identify a profile.
 A profile can be removed using this identifier using the 'profiles' command and the '-R -p' options.""")
     args = parser.parse_args()
-
-    if len(sys.argv) == 1:
-        o.print_usage()
-        sys.exit(-1)
 
     if args.output:
         output_file = args.output

@@ -107,7 +107,6 @@ A profile can be removed using this identifier using the 'profiles' command and 
     if args.output:
         output_file = args.output
     else:
-        first_domain = getDomainFromPlist(args.plist[0])
         output_file = os.path.join(os.getcwd(), args.identifier + '.mobileconfig')
 
     newPayload = PayloadDict(identifier=args.identifier, 

@@ -1,24 +1,24 @@
-# PlistToProfile
+# mcxToProfile
 
 ## Overview
 
-PlistToProfile is a simple command-line utility to create "Custom Settings" Configuration Profiles without the need for the Profile Manager service in Lion Server. It can take input from property list files on disk or directly from a Directory Services node (Local MCX or Open Directory).
+mcxToProfile is a simple command-line utility to create "Custom Settings" Configuration Profiles without the need for the Profile Manager service in Lion Server. It can take input from property list files on disk or directly from a Directory Services node (Local MCX or Open Directory).
 
 Administrators who would like to move from MCX-based management to Profiles may find this tool useful to speed up the process of migrating and testing. Currently it only supports the "Custom Settings" type, as this seems to be the functional equivalent of key-value domain management in Workgroup Manager.
 
-PlistToProfile should function on OS X 10.5 or greater, though it's been mostly only tested on Lion. It also makes use of Greg Neagle's FoundationPlist library from the Munki project, which provides native plist support via the PyObjC bridge framework.
+mcxToProfile should function on OS X 10.5 or greater, though it's been mostly only tested on Lion. It also makes use of Greg Neagle's FoundationPlist library from the Munki project, which provides native plist support via the PyObjC bridge framework.
 
 ## Example usage
 
 Here's an example:
 
-`./PlistToProfile.py --plist /path/to/a/plist --identifier MyApplicationPrefs`
+`./mcxToProfile.py --plist /path/to/a/plist --identifier MyApplicationPrefs`
 
 This will create a .mobileconfig file in the same directory, which is equivalent to a "Custom Settings" profile configured in the Profile Manager web application included in Lion Server.
 
 Here's another example, which will import an already-configured MCX preference defined in an available Directory Services computer object:
 
-`./PlistToProfile.py --dsobject /LDAPv3/od.my.org/ComputerGroups/StandardPreferences --identifier MyBasePreferences`
+`./mcxToProfile.py --dsobject /LDAPv3/od.my.org/ComputerGroups/StandardPreferences --identifier MyBasePreferences`
 
 The `--dsobject` option should work with objects defined in either a LocalMCX or standard Open Directory node on another server. This hasn't been tested with MCX attributes in OpenLDAP or Active Directory.
 
@@ -31,21 +31,21 @@ One downside to the Profile Manager web GUI is that it does not provide a mechan
 - for "Often" behaviour, use the 'Set-Once' key instead of 'Forced' for a domain
 - for "Once" behaviour, do this and set an mcx_data_timestamp alongside the mcx_preference_settings which is an NSDate
 
-PlistToProfile provides the same functionality:
+mcxToProfile provides the same functionality:
 
-`./PlistToProfile.py --plist /path/to/a/plist --identifier MyApplicationPrefs --manage Often`
+`./mcxToProfile.py --plist /path/to/a/plist --identifier MyApplicationPrefs --manage Often`
 
 When using the `--dsobject` option, the `--manage` option isn't used, as this information is already defined in the object.
 
 ### Domains
 
-Plist files used for application preferences are typically named by a reverse-domain format, and end in '.plist'. Currently, PlistToProfile will assume that the name portion of the plist file _is_ the domain to be used by MCX. In other words, application preferences won't function if you use something like `--plist my.orgs.office.2011.prefs.plist`, because it will assemble the profile to use the domain 'my.orgs.office.2011.prefs'. If you have collections of default preferences you would like to manage for various applications and system settings, it's best to store these settings in the properly-named plist files.
+Plist files used for application preferences are typically named by a reverse-domain format, and end in '.plist'. Currently, mcxToProfile will assume that the name portion of the plist file _is_ the domain to be used by MCX. In other words, application preferences won't function if you use something like `--plist my.orgs.office.2011.prefs.plist`, because it will assemble the profile to use the domain 'my.orgs.office.2011.prefs'. If you have collections of default preferences you would like to manage for various applications and system settings, it's best to store these settings in the properly-named plist files.
 
 ## Payload Identifiers
 
 The only option required besides `--plist` or `--dsobject` is an identifier. The identifier is crucial: it is what is defined in the toplevel payload's PayloadIdentifier key, and is what would be used to identify the profile to remove using `profiles -R -p [identifier]`. Also, if you attempt to install a profile with the same identifier, it will update the existing profile instead of installing another profile. The newer version could have completely different payloads and a different toplevel PayloadUUID, but it will still replace it.
 
-As far as I can tell, two profiles with unique toplevel PayloadIdentifiers but matching toplevel PayloadUUIDs will both install successfully. PlistToProfile will always generate unique UUIDs for the toplevel and nested payloads, but because the PayloadIdentifier has to be paid attention to, it's required to manually specify it.
+As far as I can tell, two profiles with unique toplevel PayloadIdentifiers but matching toplevel PayloadUUIDs will both install successfully. mcxToProfile will always generate unique UUIDs for the toplevel and nested payloads, but because the PayloadIdentifier has to be paid attention to, it's required to manually specify it.
 
 To reduce the chances of human error when updating existing profiles, I plan to add an alternate option, ie. `--identifier-from-profile`, that would take a path to a previously-built profile and use its PayloadIdentifier.
 

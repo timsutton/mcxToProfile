@@ -206,7 +206,7 @@ per-plist basis.""")
 
     if not options.identifier:
         parser.print_usage()
-        errorAndExit("Error: An identifier must be specified.")
+        sys.exit(-1)
 
     if options.plist:
         if not options.manage:

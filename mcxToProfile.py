@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# PlistToProfile.py
+# mcxToProfile.py
 # Simple utility to assist with creating Custom Settings Configuration Profiles
 # from plist files and Directory Services nodes
 
@@ -27,7 +27,7 @@ class PayloadDict:
         self.data['PayloadType'] = 'Configuration'
         self.data['PayloadScope'] = 'System'
         self.data['PayloadDescription'] = "Included custom settings:\n"
-        self.data['PayloadDisplayName'] = "PlistToProfile: "
+        self.data['PayloadDisplayName'] = "MCXToProfile: "
         self.data['PayloadIdentifier'] = identifier
 
         # An empty list for 'sub payloads' that we'll fill later
@@ -45,7 +45,7 @@ and 'manage' is one of 'Once', 'Often' or 'Always'.
         payload_dict['PayloadDisplayName'] = "Settings for %s" % domain
         payload_dict['PayloadType'] = 'com.apple.ManagedClient.preferences'
         payload_dict['PayloadIdentifier'] = "%s.%s.alacarte.customsettings.%s" % (
-                                            'PlistToProfile', self.data['PayloadUUID'], payload_dict['PayloadUUID'])
+                                            'MCXToProfile', self.data['PayloadUUID'], payload_dict['PayloadUUID'])
 
         # Update the top-level descriptive info
         self.data['PayloadDescription'] += "%s\n" % domain

@@ -14,7 +14,9 @@ import FoundationPlist
 
 
 class PayloadDict:
-    """Class to represent the complete plist contents of a Configuration Profile (.mobileconfig) file"""
+    """Class to create and manipulate Configuration Profiles.
+    The actual plist content can be accessed as a dictionary via the 'data' attribute.
+    """
     def __init__(self, identifier, removal_allowed, organization):
         self.data = {}
         self.data['PayloadVersion'] = 1
@@ -33,23 +35,42 @@ class PayloadDict:
         # An empty list for 'sub payloads' that we'll fill later
         self.data['PayloadContent'] = []
 
-    def addPayload(self, plist_dict, domain, manage):
-        """Add one plist dict contents to the profile's payloads. 'domain' is the preferences domain (ie. com.apple.finder),
-and 'manage' is one of 'Once', 'Often' or 'Always'.
+    def _addPayload(self, payload_content_dict):
+        """Add a Custom Settings payload to the profile. Takes a dict which will be the
+        PayloadContent dict within the payload. Handles the boilerplate, naming and descriptive
+        elements.
         """
+        domains = payload_content_dict.keys()
+        if len(domains) == 1:
+            domain = domains[0]
+        else:
+            domain = 'multiple preference domains'
+
         payload_dict = {}
         # Boilerplate
         payload_dict['PayloadVersion'] = 1
         payload_dict['PayloadUUID'] = makeNewUUID()
         payload_dict['PayloadEnabled'] = True
-        payload_dict['PayloadDisplayName'] = "Settings for %s" % domain
         payload_dict['PayloadType'] = 'com.apple.ManagedClient.preferences'
         payload_dict['PayloadIdentifier'] = "%s.%s.alacarte.customsettings.%s" % (
                                             'MCXToProfile', self.data['PayloadUUID'], payload_dict['PayloadUUID'])
 
+        # Add our actual MCX/Plist content
+        payload_dict['PayloadContent'] = payload_content_dict
+
         # Update the top-level descriptive info
-        self.data['PayloadDescription'] += "%s\n" % domain
-        self.data['PayloadDisplayName'] += "%s, " % domain
+        self.data['PayloadDescription'] += '\n'.join(domains)
+        self.data['PayloadDisplayName'] += domain
+
+        # Add to the profile's PayloadContent array
+        self.data['PayloadContent'].append(payload_dict)
+
+    def addPayloadFromPlistContents(self, plist_dict, domain, manage):
+        """Add one plist dict contents to the profile's payloads. 'domain' is the preferences domain (ie. com.apple.finder),
+and 'manage' is one of 'Once', 'Often' or 'Always'.
+        """
+
+        payload_dict = {}
 
         # Frequency to apply settings, or 'state'
         if manage == 'Always':
@@ -58,42 +79,23 @@ and 'manage' is one of 'Once', 'Often' or 'Always'.
             state = 'Set-Once'
 
         # Yet another nested dict for the actual contents
-        payload_dict['PayloadContent'] = {}
-        payload_dict['PayloadContent'][domain] = {}
-        payload_dict['PayloadContent'][domain][state] = []
-        payload_dict['PayloadContent'][domain][state].append({})
-        payload_dict['PayloadContent'][domain][state][0]['mcx_preference_settings'] = plist_dict
+        payload_dict[domain] = {}
+        payload_dict[domain][state] = []
+        payload_dict[domain][state].append({})
+        payload_dict[domain][state][0]['mcx_preference_settings'] = plist_dict
+
         # Add a datestamp if we're managing 'Once'
         if manage == 'Once':
             now = NSDate.new()
-            payload_dict['PayloadContent'][domain][state][0]['mcx_data_timestamp'] = now
-        self.data['PayloadContent'].append(payload_dict)
+            payload_dict[domain][state][0]['mcx_data_timestamp'] = now
 
-    def addMCXPayload(self, mcxdata):
+        self._addPayload(payload_dict)
+
+    def addPayloadFromMCX(self, mcxdata):
         """Add MCX data to the profile's payloads.
         """
-        domains = mcxdata.keys()
-        if len(domains) == 1:
-            domain = domains[0]
-        else:
-            domain = 'multiple preference domains'
-        payload_dict = {}
-        # Boilerplate
-        payload_dict['PayloadVersion'] = 1
-        payload_dict['PayloadUUID'] = makeNewUUID()
-        payload_dict['PayloadEnabled'] = True
-        payload_dict['PayloadDisplayName'] = "Settings for %s" % domain
-        payload_dict['PayloadType'] = 'com.apple.ManagedClient.preferences'
-        payload_dict['PayloadIdentifier'] = "%s.%s.alacarte.customsettings.%s" % (
-                                            'MCXToProfile', self.data['PayloadUUID'], payload_dict['PayloadUUID'])
-        # Yet another nested dict for the actual contents
-        payload_dict['PayloadContent'] = mcxdata
-
-        # Update the top-level descriptive info
-        self.data['PayloadDescription'] += '/n'.join(domains)
-        self.data['PayloadDisplayName'] += domain
-        # add nested payload to top-level payload
-        self.data['PayloadContent'].append(payload_dict)
+        # MCX is already 'configured', we just need to add the dict to the payload
+        self._addPayload(mcxdata)
 
 
 def makeNewUUID():
@@ -227,10 +229,10 @@ per-plist basis.""")
         for plist_path in options.plist:
             source_data = FoundationPlist.readPlist(plist_path)
             source_domain = getDomainFromPlist(plist_path)
-            newPayload.addPayload(source_data, source_domain, manage)
+            newPayload.addPayloadFromPlistContents(source_data, source_domain, manage)
     if options.dsobject:
         mcx_data = getMCXData(options.dsobject)
-        newPayload.addMCXPayload(mcx_data)
+        newPayload.addPayloadFromMCX(mcx_data)
 
     FoundationPlist.writePlist(newPayload.data, output_file)
 

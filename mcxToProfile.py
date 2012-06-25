@@ -18,14 +18,15 @@ class PayloadDict:
     """Class to create and manipulate Configuration Profiles.
     The actual plist content can be accessed as a dictionary via the 'data' attribute.
     """
-    def __init__(self, identifier, removal_allowed, organization):
+    def __init__(self, identifier, removal_allowed=False, organization=''):
         self.data = {}
         self.data['PayloadVersion'] = 1
         self.data['PayloadOrganization'] = organization
         self.data['PayloadUUID'] = makeNewUUID()
-        if removal_allowed == 'Always':
+        print removal_allowed
+        if removal_allowed:
             self.data['PayloadRemovalDisallowed'] = False
-        elif removal_allowed == 'Never':
+        else:
             self.data['PayloadRemovalDisallowed'] = True
         self.data['PayloadType'] = 'Configuration'
         self.data['PayloadScope'] = 'System'
@@ -184,10 +185,9 @@ A profile can be removed using this identifier using the 'profiles' command and 
 
     # Optionals
     parser.add_option('--removal-allowed', '-r',
-        action="store",
-        default="Never",
-        help="""Specifies when the profile can be removed. Currently supported options are 'Never' and 'Always',
-and defaults to 'Never'""")
+        action="store_true",
+        default=False,
+        help="""Specifies that the profile can be removed.""")
     parser.add_option('--organization', '-g',
         action="store",
         default="",

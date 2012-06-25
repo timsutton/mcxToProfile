@@ -8,6 +8,7 @@ import sys
 import os
 import optparse
 import subprocess
+import re
 from uuid import uuid4
 from Foundation import NSDate
 import FoundationPlist
@@ -65,9 +66,10 @@ class PayloadDict:
         # Add to the profile's PayloadContent array
         self.data['PayloadContent'].append(payload_dict)
 
-    def addPayloadFromPlistContents(self, plist_dict, domain, manage):
-        """Add one plist dict contents to the profile's payloads. 'domain' is the preferences domain (ie. com.apple.finder),
-and 'manage' is one of 'Once', 'Often' or 'Always'.
+    def addPayloadFromPlistContents(self, plist_dict, domain, manage, is_byhost=False):
+        """Add one plist dict contents to the profile's payloads. domain is the
+        preferences domain (ie. com.apple.finder), manage is one of 'Once', 'Often' or 'Always',
+        and is_byhost is a boolean representing whether the preference is to be used as a ByHost.
         """
 
         payload_dict = {}
@@ -77,6 +79,9 @@ and 'manage' is one of 'Once', 'Often' or 'Always'.
             state = 'Forced'
         else:
             state = 'Set-Once'
+
+        if is_byhost:
+            domain += '.ByHost'
 
         # Yet another nested dict for the actual contents
         payload_dict[domain] = {}
@@ -109,7 +114,21 @@ def errorAndExit(errmsg):
 
 def getDomainFromPlist(plist_path_or_name):
     """Assuming the domain is also the name of the plist file, strip the path and the ending '.plist'"""
-    return os.path.basename(plist_path_or_name).split('.plist')[0]
+    domain_info = {}
+    domain_info['is_byhost'] = False
+
+    # Match a domain ending in .ByHost, the Ethernet MAC, or the Hardware UUID
+    byhost_pattern = re.compile('\.ByHost$|\.[0-9a-fA-F]{12}$|\.[0-9a-fA-F]{8}-([0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$')
+
+    plist_file_name = os.path.basename(plist_path_or_name).split('.plist')[0]
+    byhost_match = re.search(byhost_pattern, plist_file_name)
+    if byhost_match:
+        domain_info['is_byhost'] = True
+        domain_info['name'] = '.'.join(plist_file_name.split('.')[0:-1])
+    else:
+        domain_info['name'] = plist_file_name
+
+    return domain_info
 
 
 def getMCXData(ds_object):
@@ -229,7 +248,10 @@ per-plist basis.""")
         for plist_path in options.plist:
             source_data = FoundationPlist.readPlist(plist_path)
             source_domain = getDomainFromPlist(plist_path)
-            newPayload.addPayloadFromPlistContents(source_data, source_domain, manage)
+            newPayload.addPayloadFromPlistContents(source_data,
+                source_domain['name'],
+                manage,
+                is_byhost=source_domain['is_byhost'])
     if options.dsobject:
         mcx_data = getMCXData(options.dsobject)
         newPayload.addPayloadFromMCX(mcx_data)

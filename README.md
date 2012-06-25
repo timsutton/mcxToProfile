@@ -61,7 +61,7 @@ To reduce the chances of human error when updating existing profiles, I plan to 
 ## Other functionality
 
 - Multiple plists can be defined (with `--plist` or `-p`) and they will be combined as individual payloads within the Configuration Profile
-- It can be specified whether a profile is allowed to be removed using `--removal-allowed` or `-r`
+- A profile can be made "Always removable" using `--removal-allowed` or `-r` (default is "Never removable")
 - An organization name for the profile can be specified using `--organization` or `-g`
 - A specific output filename for the .mobileconfig file can be specified using `--output` or `-o`
 

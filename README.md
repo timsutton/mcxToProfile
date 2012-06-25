@@ -41,6 +41,15 @@ When using the `--dsobject` option, the `--manage` option isn't used, as this in
 
 Plist files used for application preferences are typically named by a reverse-domain format, and end in '.plist'. Currently, mcxToProfile will assume that the name portion of the plist file _is_ the domain to be used by MCX. In other words, application preferences won't function if you use something like `--plist my.orgs.office.2011.prefs.plist`, because it will assemble the profile to use the domain 'my.orgs.office.2011.prefs'. If you have collections of default preferences you would like to manage for various applications and system settings, it's best to store these settings in the properly-named plist files.
 
+### ByHost preferences
+
+A plist that contains one of the following patterns in its filename will automatically be configured as a ByHost preference:
+
+- com.org.app.ByHost.plist (the literal string '.ByHost')
+- com.org.app.001122aabbcc.plist (a 12-hex-digit MAC address)
+- com.org.app.01234567-89AB-CDEF-0123-456789ABCDEF.plist (a hardware UUID)
+
+
 ## Payload Identifiers
 
 The only option required besides `--plist` or `--dsobject` is an identifier. The identifier is crucial: it is what is defined in the toplevel payload's PayloadIdentifier key, and is what would be used to identify the profile to remove using `profiles -R -p [identifier]`. Also, if you attempt to install a profile with the same identifier, it will update the existing profile instead of installing another profile. The newer version could have completely different payloads and a different toplevel PayloadUUID, but it will still replace it.
@@ -58,9 +67,7 @@ To reduce the chances of human error when updating existing profiles, I plan to 
 
 ## To-do
 
-- support for ByHost preferences with the `--plist` option (detecting either '.ByHost' or a hardware UUID string in the .plist file name)
 - option to take a path to an existing profile to specify the identifier, rather than requiring the name explicitly
-- remove duplicate code in the PayloadDict class methods
 
 ## Note
 

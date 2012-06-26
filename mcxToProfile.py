@@ -163,11 +163,22 @@ def getMCXData(ds_object):
     return mcx_data['mcx_application_data']
 
 
+def getIdentifierFromProfile(profile_path):
+    profile_dict = FoundationPlist.readPlist(profile_path)
+    try:
+        profile_id = profile_dict['PayloadIdentifier']
+    except:
+        errorAndExit("Can't find a ProfileIdentifier in the profile at %s." % profile_path)
+    return profile_id
+
+
 def main():
     parser = optparse.OptionParser()
     parser.set_usage(
-        """usage: %prog [--dsobject DSOBJECT | --plist PLIST] --identifier IDENTIFIER [options]
-       One of '--dsobject' or '--plist' must be specified.""")
+        """usage: %prog [--dsobject DSOBJECT | --plist PLIST] 
+                       [--identifier IDENTIFIER | --identifier-from-profile PATH] [options]
+       One of '--dsobject' or '--plist' must be specified, and only one identifier option.
+       Run '%prog --help' for more information.""")
 
     # Required options
     parser.add_option('--dsobject', '-d', metavar='DSOBJECT',
@@ -181,6 +192,11 @@ Can be specified multiple times.""")
         action="store",
         help="""Top-level payload identifier. This is used to uniquely identify a profile.
 A profile can be removed using this identifier using the 'profiles' command and the '-R -p' options.""")
+    parser.add_option('--identifier-from-profile', '-f',
+        action="store",
+        metavar="PATH",
+        help="""Path to an existing .mobileconfig file from which to copy the identifier,
+as opposed to specifying it with the --identifier option.""")
 
     # Optionals
     parser.add_option('--removal-allowed', '-r',
@@ -224,9 +240,17 @@ per-plist basis.""")
         parser.print_usage()
         errorAndExit("Error: The '--manage' option is used only in conjunction with '--plist'. DS Objects already contain this information.")
 
-    if not options.identifier:
+    if (not options.identifier and not options.identifier_from_profile) or \
+    (options.identifier and options.identifier_from_profile):
         parser.print_usage()
         sys.exit(-1)
+
+    if options.identifier:
+        identifier = options.identifier
+    elif options.identifier_from_profile:
+        if not os.path.exists(options.identifier_from_profile):
+            errorAndExit("Error reading a profile at path %s" % options.identifier_from_profile)
+        identifier = getIdentifierFromProfile(options.identifier_from_profile)
 
     if options.plist:
         if not options.manage:
@@ -237,9 +261,9 @@ per-plist basis.""")
     if options.output:
         output_file = options.output
     else:
-        output_file = os.path.join(os.getcwd(), options.identifier + '.mobileconfig')
+        output_file = os.path.join(os.getcwd(), identifier + '.mobileconfig')
 
-    newPayload = PayloadDict(identifier=options.identifier,
+    newPayload = PayloadDict(identifier=identifier,
         removal_allowed=options.removal_allowed,
         organization=options.organization)
 

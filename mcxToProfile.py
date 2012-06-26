@@ -23,7 +23,6 @@ class PayloadDict:
         self.data['PayloadVersion'] = 1
         self.data['PayloadOrganization'] = organization
         self.data['PayloadUUID'] = makeNewUUID()
-        print removal_allowed
         if removal_allowed:
             self.data['PayloadRemovalDisallowed'] = False
         else:

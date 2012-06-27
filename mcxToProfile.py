@@ -269,7 +269,13 @@ per-plist basis.""")
 
     if options.plist:
         for plist_path in options.plist:
-            source_data = FoundationPlist.readPlist(plist_path)
+            if not os.path.exists(plist_path):
+                errorAndExit("No plist file exists at %s" % plist_path)
+            try:
+                source_data = FoundationPlist.readPlist(plist_path)
+            except FoundationPlist.FoundationPlistException:
+                errorAndExit("Error decoding plist data in file %s" % plist_path)
+
             source_domain = getDomainFromPlist(plist_path)
             newPayload.addPayloadFromPlistContents(source_data,
                 source_domain['name'],

@@ -69,6 +69,7 @@ As far as I can tell, two profiles with unique toplevel PayloadIdentifiers but m
 ## To-do
 
 - error handling
+- add status output and a verbose mode
 - append '.mobileconfig' to filename if not already specified
 - potentially 'convert' known existing preference types (loginwindow, dock, etc.) into their native payload types, rather than as Custom Payloads
 

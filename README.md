@@ -54,9 +54,10 @@ A plist that contains one of the following patterns in its filename will automat
 
 The only option required besides `--plist` or `--dsobject` is an identifier. The identifier is crucial: it is what is defined in the toplevel payload's PayloadIdentifier key, and is what would be used to identify the profile to remove using `profiles -R -p [identifier]`. Also, if you attempt to install a profile with the same identifier, it will update the existing profile instead of installing another profile. The newer version could have completely different payloads and a different toplevel PayloadUUID, but it will still replace it.
 
+Specify an identifier using either the `--identifier` or `--identifier-from-profile` options.
+
 As far as I can tell, two profiles with unique toplevel PayloadIdentifiers but matching toplevel PayloadUUIDs will both install successfully. mcxToProfile will always generate unique UUIDs for the toplevel and nested payloads, but because the PayloadIdentifier has to be paid attention to, it's required to manually specify it.
 
-To reduce the chances of human error when updating existing profiles, I plan to add an alternate option, ie. `--identifier-from-profile`, that would take a path to a previously-built profile and use its PayloadIdentifier.
 
 ## Other functionality
 
@@ -67,8 +68,12 @@ To reduce the chances of human error when updating existing profiles, I plan to 
 
 ## To-do
 
-- option to take a path to an existing profile to specify the identifier, rather than requiring the name explicitly
+- error handling
+- append '.mobileconfig' to filename if not already specified
+- potentially 'convert' known existing preference types (loginwindow, dock, etc.) into their native payload types, rather than as Custom Payloads
 
 ## Note
 
-I really do not have much experience with Configuration Profiles, and this is a rough first pass at a generic tool that I knew would help me understand better how Configuration Profiles actually work. There may well be fundamental design changes in how this tool should work to make it useful for others, so I welcome anyone's feedback/suggestions/pull requests. Special thanks to Greg Neagle for some very useful intial feedback, and for adding the MCX functionality.
+I really do not have much experience with Configuration Profiles, and this is a rough first pass at a generic tool that I knew would help me understand better how Configuration Profiles actually work. There may well be fundamental design changes in how this tool should work to make it useful for others, so I welcome anyone's feedback/suggestions/pull requests.
+
+Special thanks to Greg Neagle for some very useful intial feedback, and for adding the --dsimport functionality.

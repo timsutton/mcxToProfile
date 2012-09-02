@@ -6,7 +6,7 @@ mcxToProfile is a simple command-line utility to create "Custom Settings" Config
 
 Administrators who would like to move from MCX-based management to Profiles may find this tool useful to speed up the process of migrating and testing. Currently it only supports the "Custom Settings" type, as this seems to be the functional equivalent of key-value domain management in Workgroup Manager.
 
-mcxToProfile should function on OS X 10.5 or greater, though it's been mostly only tested on Lion. It also makes use of Greg Neagle's FoundationPlist library from the Munki project, which provides native plist support via the PyObjC bridge framework.
+mcxToProfile should function on OS X 10.5 or greater, though it's been mostly only tested on Lion. It also makes use of Greg Neagle's FoundationPlist library from the Munki project, which provides native plist support via the PyObjC bridge framework. FoundationPlist is licensed under the Apache License, version 2.0.
 
 ## Example usage
 
@@ -52,11 +52,13 @@ A plist that contains one of the following patterns in its filename will automat
 
 ## Payload Identifiers
 
-The only option required besides `--plist` or `--dsobject` is an identifier. The identifier is crucial: it is what is defined in the toplevel payload's PayloadIdentifier key, and is what would be used to identify the profile to remove using `profiles -R -p [identifier]`. Also, if you attempt to install a profile with the same identifier, it will update the existing profile instead of installing another profile. The newer version could have completely different payloads and a different toplevel PayloadUUID, but it will still replace it.
+The only option required besides `--plist` or `--dsobject` is `--identifier`. The identifier is crucial: it is what is defined in the toplevel payload's PayloadIdentifier key, and is what would be used to identify the profile to remove using `profiles -R -p [identifier]`.
 
-Specify an identifier using either the `--identifier` or `--identifier-from-profile` options.
+If you attempt to install a profile with the same identifier, it will update the existing profile instead of installing another profile.
 
-As far as I can tell, two profiles with unique toplevel PayloadIdentifiers but matching toplevel PayloadUUIDs will both install successfully. mcxToProfile will always generate unique UUIDs for the toplevel and nested payloads, but because the PayloadIdentifier has to be paid attention to, it's required to manually specify it.
+Specify an identifier using either the `--identifier` or `--identifier-from-profile` options. If one is building an updated version of a profile, it's strongly recommended to use `--identifier-from-profile` to guarantee a consistent identifier and UUID.
+
+Two profiles with unique toplevel PayloadIdentifiers but matching toplevel PayloadUUIDs will both install successfully. However, Profile Manager maintains consistent UUIDs, so we aim to do the same (although currently only at the top-level).
 
 
 ## Other functionality
@@ -68,13 +70,10 @@ As far as I can tell, two profiles with unique toplevel PayloadIdentifiers but m
 
 ## To-do
 
-- error handling
 - add status output and a verbose mode
 - append '.mobileconfig' to filename if not already specified
-- potentially 'convert' known existing preference types (loginwindow, dock, etc.) into their native payload types, rather than as Custom Payloads
+- potentially 'convert' known existing preference types (loginwindow, dock, etc.) into their native payload types, rather than as Custom Settings payloads
 
-## Note
-
-I really do not have much experience with Configuration Profiles, and this is a rough first pass at a generic tool that I knew would help me understand better how Configuration Profiles actually work. There may well be fundamental design changes in how this tool should work to make it useful for others, so I welcome anyone's feedback/suggestions/pull requests.
+## Acknowledgments
 
 Special thanks to Greg Neagle for some very useful intial feedback, and for adding the --dsimport functionality.

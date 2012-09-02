@@ -241,6 +241,10 @@ per-plist basis.""")
         parser.print_usage()
         errorAndExit("Error: The '--dsobject' and '--plist' options are mutually exclusive.")
 
+    if not options.dsobject and not options.plist:
+        parser.print_usage()
+        errorAndExit("Error: One of '--dsobject' or '--plist' must be specified.")
+
     if options.dsobject and options.manage:
         print options.manage
         parser.print_usage()

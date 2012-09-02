@@ -18,11 +18,14 @@ class PayloadDict:
     """Class to create and manipulate Configuration Profiles.
     The actual plist content can be accessed as a dictionary via the 'data' attribute.
     """
-    def __init__(self, identifier, removal_allowed=False, organization=''):
+    def __init__(self, identifier, uuid=False, removal_allowed=False, organization=''):
         self.data = {}
         self.data['PayloadVersion'] = 1
         self.data['PayloadOrganization'] = organization
-        self.data['PayloadUUID'] = makeNewUUID()
+        if uuid:
+            self.data['PayloadUUID'] = uuid
+        else:
+            self.data['PayloadUUID'] = makeNewUUID()
         if removal_allowed:
             self.data['PayloadRemovalDisallowed'] = False
         else:
@@ -164,12 +167,15 @@ def getMCXData(ds_object):
 
 
 def getIdentifierFromProfile(profile_path):
+    """Return a tuple containing the PayloadIdentifier and PayloadUUID from the
+    profile at the path specified."""
     profile_dict = FoundationPlist.readPlist(profile_path)
     try:
         profile_id = profile_dict['PayloadIdentifier']
+        profile_uuid = profile_dict['PayloadUUID']
     except:
         errorAndExit("Can't find a ProfileIdentifier in the profile at %s." % profile_path)
-    return profile_id
+    return (profile_id, profile_uuid)
 
 
 def main():
@@ -195,8 +201,8 @@ A profile can be removed using this identifier using the 'profiles' command and 
     parser.add_option('--identifier-from-profile', '-f',
         action="store",
         metavar="PATH",
-        help="""Path to an existing .mobileconfig file from which to copy the identifier,
-as opposed to specifying it with the --identifier option.""")
+        help="""Path to an existing .mobileconfig file from which to copy the identifier
+and UUID, as opposed to specifying it with the --identifier option.""")
 
     # Optionals
     parser.add_option('--removal-allowed', '-r',
@@ -247,10 +253,11 @@ per-plist basis.""")
 
     if options.identifier:
         identifier = options.identifier
+        uuid = False
     elif options.identifier_from_profile:
         if not os.path.exists(options.identifier_from_profile):
             errorAndExit("Error reading a profile at path %s" % options.identifier_from_profile)
-        identifier = getIdentifierFromProfile(options.identifier_from_profile)
+        identifier, uuid = getIdentifierFromProfile(options.identifier_from_profile)
 
     if options.plist:
         if not options.manage:
@@ -264,6 +271,7 @@ per-plist basis.""")
         output_file = os.path.join(os.getcwd(), identifier + '.mobileconfig')
 
     newPayload = PayloadDict(identifier=identifier,
+        uuid=uuid,
         removal_allowed=options.removal_allowed,
         organization=options.organization)
 

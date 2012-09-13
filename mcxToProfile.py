@@ -61,6 +61,7 @@ class PayloadDict:
         payload_dict['PayloadType'] = 'com.apple.ManagedClient.preferences'
         payload_dict['PayloadIdentifier'] = "%s.%s.alacarte.customsettings.%s" % (
                                             'MCXToProfile', self.data['PayloadUUID'], payload_dict['PayloadUUID'])
+        payload_dict['PayloadDisplayName'] = 'MCXToProfile: (%s)' % (', '.join(domains))
 
         # Add our actual MCX/Plist content
         payload_dict['PayloadContent'] = payload_content_dict

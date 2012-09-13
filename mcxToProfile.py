@@ -50,8 +50,10 @@ class PayloadDict:
         domains = payload_content_dict.keys()
         if len(domains) == 1:
             domain = domains[0]
+            self.data['PayloadDescription'] += "%s\n" % domain
         else:
             domain = 'multiple preference domains'
+            self.data['PayloadDescription'] += '\n'.join(domains)
 
         payload_dict = {}
         # Boilerplate
@@ -67,8 +69,7 @@ class PayloadDict:
         payload_dict['PayloadContent'] = payload_content_dict
 
         # Update the top-level descriptive info
-        self.data['PayloadDescription'] += '\n'.join(domains)
-        self.data['PayloadDisplayName'] += domain
+        self.data['PayloadDisplayName'] += domain + ', '
 
         # Add to the profile's PayloadContent array
         self.data['PayloadContent'].append(payload_dict)

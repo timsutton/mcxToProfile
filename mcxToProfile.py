@@ -39,6 +39,19 @@ class PayloadDict:
         self.data['PayloadDisplayName'] = "MCXToProfile: "
         self.data['PayloadIdentifier'] = identifier
 
+        # store git commit for reference if possible
+        self.gitrev = None
+        root_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
+        if '.git' in os.listdir(root_dir):
+            git_p = subprocess.Popen('git rev-parse HEAD',
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    shell=True,
+                                    cwd=root_dir)
+            out, err = git_p.communicate()
+            if not git_p.returncode:
+                self.gitrev = out.strip()
+
         # An empty list for 'sub payloads' that we'll fill later
         self.data['PayloadContent'] = []
 
@@ -109,6 +122,13 @@ class PayloadDict:
         """
         # MCX is already 'configured', we just need to add the dict to the payload
         self._addPayload(mcxdata)
+
+    def finalizeAndSave(self, output_path):
+        """Perform last modifications and save to an output plist.
+        """
+        if self.gitrev:
+            self.data['PayloadDescription'] += "\nGit revision: %s" % self.gitrev[0:10]
+        writePlist(self.data, output_path)
 
 
 def makeNewUUID():
@@ -412,7 +432,7 @@ per-plist basis.""")
         mcx_data = getMCXData(options.dsobject)
         newPayload.addPayloadFromMCX(mcx_data)
 
-    writePlist(newPayload.data, output_file)
+    newPayload.finalizeAndSave(output_file)
 
 
 if __name__ == "__main__":

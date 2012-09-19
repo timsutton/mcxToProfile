@@ -16,6 +16,10 @@ Here's an example:
 
 This will create a .mobileconfig file in the same directory, which is equivalent to a "Custom Settings" profile configured in the Profile Manager web application included in Lion Server.
 
+The `--plist` option can be specified multiple times:
+
+`./mcxToProfile.py --plist com.microsoft.office.plist --plist com.microsoft.autoupdate2.plist --identifier Office2011Prefs --manage Once`
+
 Here's another example, which will import an already-configured MCX preference defined in an available Directory Services computer object:
 
 `./mcxToProfile.py --dsobject /LDAPv3/od.my.org/ComputerGroups/StandardPreferences --identifier MyBasePreferences`

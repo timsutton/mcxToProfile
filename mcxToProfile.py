@@ -140,10 +140,11 @@ def errorAndExit(errmsg):
     exit(-1)
 
 
-# Functions readPlist() and writePlist(), class FoundationPlistException()
-# and its subclasses borrowed with permission from Greg Neagle of the Munki project:
+# Functions readPlist(), readPlistFromString() and writePlist(), class
+# FoundationPlistException() and its subclasses borrowed with permission
+# from Greg Neagle of the Munki project:
 #
-# http://code.google.com/p/munki.
+# http://code.google.com/p/munki
 #
 # The following copyright notice and license information applies to these only.
 #

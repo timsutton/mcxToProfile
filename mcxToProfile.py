@@ -271,7 +271,7 @@ def getDomainFromPlist(plist_path_or_name):
 
 def getMCXData(ds_object):
     '''Returns a dictionary representation of dsAttrTypeStandard:MCXSettings
-    from the given DirectoryServices object'''
+    from the given DirectoryServices object. This is an array of dicts.'''
     ds_object_parts = ds_object.split('/')
     ds_node = '/'.join(ds_object_parts[0:3])
     ds_object_path = '/' + '/'.join(ds_object_parts[3:])
@@ -282,23 +282,31 @@ def getMCXData(ds_object):
     (pliststr, err) = proc.communicate()
     if proc.returncode:
         errorAndExit("dscl error: %s" % err)
+
     # decode plist string returned by dscl
     try:
         mcx_dict = readPlistFromString(pliststr)
     except FoundationPlistException:
         errorAndExit(
             "Could not decode plist data from dscl:\n" % pliststr)
+
     # mcx_settings is a plist encoded inside the plist!
     try:
-        mcx_data_plist = mcx_dict['dsAttrTypeStandard:MCXSettings'][0]
+        mcx_data_plist = mcx_dict['dsAttrTypeStandard:MCXSettings']
     except KeyError:
         errorAndExit("No mcx_settings in %s:\n%s" % (ds_object, pliststr))
-    except IndexError:
-        errorAndExit(
-            "Unexpected mcx_settings format in %s:\n%s" % (ds_object, pliststr))
-    # decode the embedded plist
-    mcx_data = readPlistFromString(str(mcx_data_plist))
-    return mcx_data['mcx_application_data']
+
+    mcx_data = []
+    # build a list containing domains' mcx_application_data dict
+    for mcx_item in mcx_data_plist:
+        try:
+            mcx_item_data = readPlistFromString(str(mcx_item))
+            mcx_data.append(mcx_item_data['mcx_application_data'])
+        except KeyError:
+            errorAndExit(
+                "Unexpected mcx_settings format in MCXSettings array item:\n%s" % mcx_item)
+
+    return mcx_data
 
 
 def getIdentifierFromProfile(profile_path):
@@ -430,7 +438,9 @@ per-plist basis.""")
                 is_byhost=source_domain['is_byhost'])
     if options.dsobject:
         mcx_data = getMCXData(options.dsobject)
-        newPayload.addPayloadFromMCX(mcx_data)
+        # Each domain in the MCX blob gets its own payload
+        for mcx_domain in mcx_data:
+            newPayload.addPayloadFromMCX(mcx_domain)
 
     newPayload.finalizeAndSave(output_file)
 

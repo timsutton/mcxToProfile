@@ -2,11 +2,11 @@
 
 ## Overview
 
-mcxToProfile is a simple command-line utility to create "Custom Settings" Configuration Profiles without the need for the Profile Manager service in Lion Server. It can take input from property list files on disk or directly from a Directory Services node (Local MCX or Open Directory).
+mcxToProfile is a simple command-line utility to create "Custom Settings" Configuration Profiles without the need for the Profile Manager Device Management service in OS X Server 10.7 and 10.8. It can take input from property list files on disk or directly from a Directory Services node (Local MCX or Open Directory).
 
 Administrators who would like to move from MCX-based management to Profiles may find this tool useful to speed up the process of migrating and testing. Currently it only supports the "Custom Settings" type, as this seems to be the functional equivalent of key-value domain management in Workgroup Manager.
 
-mcxToProfile should function on OS X 10.5 or greater, though it's been mostly only tested on Lion. It also makes use of Greg Neagle's FoundationPlist library from the Munki project, which provides native plist support via the PyObjC bridge framework. FoundationPlist is licensed under the Apache License, version 2.0.
+mcxToProfile should function on OS X 10.5 or greater. It also makes use of Greg Neagle's FoundationPlist library from the Munki project, which provides native plist support via PyObjC. FoundationPlist is licensed under the Apache License, version 2.0.
 
 ## Example usage
 
@@ -39,7 +39,7 @@ mcxToProfile provides the same functionality:
 
 `./mcxToProfile.py --plist /path/to/a/plist --identifier MyApplicationPrefs --manage Often`
 
-When using the `--dsobject` option, the `--manage` option isn't used, as this information is already defined in the object.
+When using the `--dsobject` option, the `--manage` option is ignored, as this information is already defined in the MCX object pulled from the DS node.
 
 ### Domains
 
@@ -76,7 +76,7 @@ Two profiles with unique toplevel PayloadIdentifiers but matching toplevel Paylo
 
 - add status output and a verbose mode
 - append '.mobileconfig' to filename if not already specified
-- potentially 'convert' known existing preference types (loginwindow, dock, etc.) into their native payload types, rather than as Custom Settings payloads
+- potentially 'convert' known existing preference types (loginwindow, dock, etc.) into their native payload types, rather than as Custom Settings payloads. This may not be able to ever cover all cases as some key names have changed from 10.6.
 
 ## Acknowledgments
 

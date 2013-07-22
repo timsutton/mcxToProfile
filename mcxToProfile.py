@@ -301,6 +301,7 @@ def getMCXData(ds_object):
     # build a list containing domains' mcx_application_data dict
     for mcx_item in mcx_data_plist:
         try:
+            mcx_item = mcx_item.encode('UTF-8')
             mcx_item_data = readPlistFromString(str(mcx_item))
             mcx_data.append(mcx_item_data['mcx_application_data'])
         except KeyError:

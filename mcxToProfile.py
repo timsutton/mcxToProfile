@@ -412,7 +412,8 @@ per-plist basis.""")
         if not options.manage:
             manage = 'Always'
         else:
-            manage = options.manage
+            # ensure capitalization
+            manage = options.manage[0].upper() + options.manage[1:].lower()
 
     if options.output:
         output_file = options.output

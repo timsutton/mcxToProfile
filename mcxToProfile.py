@@ -36,7 +36,7 @@ class PayloadDict:
         self.data['PayloadType'] = 'Configuration'
         self.data['PayloadScope'] = 'System'
         self.data['PayloadDescription'] = "Included custom settings:\n"
-        self.data['PayloadDisplayName'] = displayname + ": "
+        self.data['PayloadDisplayName'] = displayname
         self.data['PayloadIdentifier'] = identifier
 
         # store git commit for reference if possible
@@ -82,7 +82,8 @@ class PayloadDict:
         payload_dict['PayloadContent'] = payload_content_dict
 
         # Update the top-level descriptive info
-        self.data['PayloadDisplayName'] += domain + ', '
+        if self.data['PayloadDisplayName'] == "MCXToProfile":
+            self.data['PayloadDisplayName'] += ': ' + domain + ', '
 
         # Add to the profile's PayloadContent array
         self.data['PayloadContent'].append(payload_dict)

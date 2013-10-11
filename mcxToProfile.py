@@ -21,7 +21,7 @@ class PayloadDict:
     """Class to create and manipulate Configuration Profiles.
     The actual plist content can be accessed as a dictionary via the 'data' attribute.
     """
-    def __init__(self, identifier, uuid=False, removal_allowed=False, organization=''):
+    def __init__(self, identifier, uuid=False, removal_allowed=False, organization='', displayname=''):
         self.data = {}
         self.data['PayloadVersion'] = 1
         self.data['PayloadOrganization'] = organization
@@ -36,7 +36,7 @@ class PayloadDict:
         self.data['PayloadType'] = 'Configuration'
         self.data['PayloadScope'] = 'System'
         self.data['PayloadDescription'] = "Included custom settings:\n"
-        self.data['PayloadDisplayName'] = "MCXToProfile: "
+        self.data['PayloadDisplayName'] = displayname
         self.data['PayloadIdentifier'] = identifier
 
         # store git commit for reference if possible
@@ -82,7 +82,8 @@ class PayloadDict:
         payload_dict['PayloadContent'] = payload_content_dict
 
         # Update the top-level descriptive info
-        self.data['PayloadDisplayName'] += domain + ', '
+        if self.data['PayloadDisplayName'] == "MCXToProfile":
+            self.data['PayloadDisplayName'] += ': ' + domain + ', '
 
         # Add to the profile's PayloadContent array
         self.data['PayloadContent'].append(payload_dict)
@@ -362,6 +363,10 @@ and UUID, as opposed to specifying it with the --identifier option.""")
         action="store",
         metavar='PATH',
         help="Output path for profile. Defaults to 'identifier.mobileconfig' in the current working directory.")
+    parser.add_option('--displayname', '-n',
+        action="store",
+        default="MCXToProfile",
+        help="Change PayloadDisplayName to supplied string.")
 
     # Plist-specific
     plist_options = optparse.OptionGroup(parser,
@@ -423,7 +428,8 @@ per-plist basis.""")
     newPayload = PayloadDict(identifier=identifier,
         uuid=uuid,
         removal_allowed=options.removal_allowed,
-        organization=options.organization)
+        organization=options.organization,
+        displayname=options.displayname)
 
     if options.plist:
         for plist_path in options.plist:

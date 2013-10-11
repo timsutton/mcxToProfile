@@ -364,7 +364,7 @@ and UUID, as opposed to specifying it with the --identifier option.""")
         help="Output path for profile. Defaults to 'identifier.mobileconfig' in the current working directory.")
     parser.add_option('--displayname', '-n',
         action="store",
-        default="MCXToProfile: ",
+        default="MCXToProfile",
         help="Change PayloadDisplayName to supplied string.")
 
     # Plist-specific

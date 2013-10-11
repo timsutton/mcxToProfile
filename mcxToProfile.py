@@ -76,14 +76,13 @@ class PayloadDict:
         payload_dict['PayloadType'] = 'com.apple.ManagedClient.preferences'
         payload_dict['PayloadIdentifier'] = "%s.%s.alacarte.customsettings.%s" % (
                                             'MCXToProfile', self.data['PayloadUUID'], payload_dict['PayloadUUID'])
-        payload_dict['PayloadDisplayName'] = 'MCXToProfile: (%s)' % (', '.join(domains))
+
+        # Update the top-level descriptive info
+        if self.data['PayloadDisplayName'] == '':
+            self.data['PayloadDisplayName'] = 'MCXToProfile: %s' % domain
 
         # Add our actual MCX/Plist content
         payload_dict['PayloadContent'] = payload_content_dict
-
-        # Update the top-level descriptive info
-        if self.data['PayloadDisplayName'] == "MCXToProfile":
-            self.data['PayloadDisplayName'] += ': ' + domain + ', '
 
         # Add to the profile's PayloadContent array
         self.data['PayloadContent'].append(payload_dict)
@@ -363,10 +362,10 @@ and UUID, as opposed to specifying it with the --identifier option.""")
         action="store",
         metavar='PATH',
         help="Output path for profile. Defaults to 'identifier.mobileconfig' in the current working directory.")
-    parser.add_option('--displayname', '-n',
+    parser.add_option('--displayname',
         action="store",
-        default="MCXToProfile",
-        help="Change PayloadDisplayName to supplied string.")
+        default="",
+        help="Display name for profile. Defaults to 'MCXToProfile: <first domain>'.")
 
     # Plist-specific
     plist_options = optparse.OptionGroup(parser,

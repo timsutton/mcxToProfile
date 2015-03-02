@@ -30,16 +30,18 @@ The `--dsobject` option should work with objects defined in either a LocalMCX or
 
 ### Once/Often/Always management
 
-One downside to the Profile Manager web GUI is that it does not provide a mechanism to choose the "management frequency" of an MCX-set preference, such as "Once" or "Often". It was discovered very recently (again, by Greg Neagle) that it's possible to regain that functionality, by slightly altering the contents of the .mobileconfig file to match the MCX XML as when created in Workgroup Manager:
+One downside to the Profile Manager web GUI is that it does not provide a mechanism to choose the "management frequency" of an MCX-set preference, such as "Once" or "Often". It was discovered (again, by Greg Neagle) that it's possible to regain that functionality, by slightly altering the contents of the .mobileconfig file to match the MCX XML as when created in Workgroup Manager:
 
 - for "Often" behaviour, use the 'Set-Once' key instead of 'Forced' for a domain
 - for "Once" behaviour, do this and set an mcx_data_timestamp alongside the mcx_preference_settings which is an NSDate
 
 mcxToProfile provides the same functionality:
 
-`./mcxToProfile.py --plist /path/to/a/plist --identifier MyApplicationPrefs --manage Often`
+`./mcxToProfile.py --plist /path/to/a/plist --identifier MyApplicationPrefs --manage Once`
 
 When using the `--dsobject` option, the `--manage` option is ignored, as this information is already defined in the MCX object pulled from the DS node.
+
+**Note:** It's [been documented](https://osxbytes.wordpress.com/2015/02/25/profile-behavior-changes-in-yosemite) that in OS X Yosemite, the behaviour for the "Often"-equivalent can lead to undesirable results when the profile is installed, so mcxToProfile now discourages the use of "Often." Thanks to [Eric Holtam](https://twitter.com/eholtam) and [Patrick Fergus](https://twitter.com/foigus) for documentation of this issue.
 
 ### Domains
 

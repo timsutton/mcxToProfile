@@ -378,7 +378,10 @@ per-plist basis.""")
 
     plist_options.add_option('--manage', '-m',
         action="store",
-        help="Management frequency - Once, Often or Always. Defaults to Always.")
+        help=("Management frequency - 'Once' or 'Always'. Defaults to "
+              "Always. 'Often' is also supported, but is not recommended "
+              "due to its having undesirable effects on clients running "
+              "Yosemite."))
 
     options, args = parser.parse_args()
 
@@ -418,6 +421,13 @@ per-plist basis.""")
         else:
             # ensure capitalization
             manage = options.manage[0].upper() + options.manage[1:].lower()
+    if manage == 'Often':
+        print >> sys.stderr, \
+            ("WARNING: Deploying profiles configured for 'Often' settings "
+             "management is known to have undesirable effects on OS X "
+             "Yosemite. \n"
+             "         Consider using 'Once' instead, and see this repo's "
+             "README for links to more documentation.")
 
     if options.output:
         output_file = options.output

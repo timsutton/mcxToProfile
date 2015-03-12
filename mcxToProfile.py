@@ -421,6 +421,8 @@ per-plist basis.""")
         else:
             # ensure capitalization
             manage = options.manage[0].upper() + options.manage[1:].lower()
+    else:
+        manage = None
     if manage == 'Often':
         print >> sys.stderr, \
             ("WARNING: Deploying profiles configured for 'Often' settings "

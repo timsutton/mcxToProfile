@@ -419,8 +419,7 @@ per-plist basis.""")
         if not options.manage:
             manage = 'Always'
         else:
-            # ensure capitalization
-            manage = options.manage[0].upper() + options.manage[1:].lower()
+            manage = options.manage.capitalize()
     else:
         manage = None
     if manage == 'Often':

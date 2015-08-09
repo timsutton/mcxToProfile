@@ -310,6 +310,26 @@ def getMCXData(ds_object):
 
     return mcx_data
 
+def getDefaultsData(domain, current_host):
+    '''Returns the content of the defaults domain as an array or dict obejct.'''
+    cmd = ['/usr/bin/defaults', 'read', domain]
+
+    if current_host:
+        cmd.insert(1, '-currentHost')
+
+    proc = subprocess.Popen(cmd, bufsize=1, stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    (pliststr, err) = proc.communicate()
+    if proc.returncode:
+        errorAndExit("defaults error: %s" % err)
+    # decode plist string returned by defaults
+    try:
+        defaults_dict = readPlistFromString(pliststr)
+    except FoundationPlistException:
+        errorAndExit(
+            "Could not decode plist data from defaults:\n" % pliststr)
+    return defaults_dict
+
 
 def getIdentifierFromProfile(profile_path):
     """Return a tuple containing the PayloadIdentifier and PayloadUUID from the
@@ -326,9 +346,9 @@ def getIdentifierFromProfile(profile_path):
 def main():
     parser = optparse.OptionParser()
     parser.set_usage(
-        """usage: %prog [--dsobject DSOBJECT | --plist PLIST] 
+        """usage: %prog [--dsobject DSOBJECT | --plist PLIST | --defaults DOMAIN]
                        [--identifier IDENTIFIER | --identifier-from-profile PATH] [options]
-       One of '--dsobject' or '--plist' must be specified, and only one identifier option.
+       One of '--dsobject', '--plist', or '--defaults' must be specified, and only one identifier option.
        Run '%prog --help' for more information.""")
 
     # Required options
@@ -338,6 +358,9 @@ Examples: /Local/Default/Computers/foo
           /LDAPv3/some_ldap_server/ComputerGroups/bar""")
     parser.add_option('--plist', '-p', action="append", metavar='PLIST_FILE',
         help="""Path to a plist to be added as a profile payload.
+Can be specified multiple times.""")
+    parser.add_option('--defaults', action="append", metavar='DEFAULTS_DOMAIN',
+        help="""Default or preferences domain to be added as profile payload.
 Can be specified multiple times.""")
     parser.add_option('--identifier', '-i',
         action="store",
@@ -350,6 +373,10 @@ A profile can be removed using this identifier using the 'profiles' command and 
 and UUID, as opposed to specifying it with the --identifier option.""")
 
     # Optionals
+    parser.add_option('--currentHost',
+        action="store_true",
+        default=False,
+        help="""When using the '--defaults' option this sets the '--currentHost' flag for the 'defaults' command.""" )
     parser.add_option('--removal-allowed', '-r',
         action="store_true",
         default=False,
@@ -386,23 +413,28 @@ per-plist basis.""")
         parser.print_usage()
         sys.exit(-1)
 
-    if options.dsobject and options.plist:
+    number_of_options = int(bool(options.dsobject)) + int(bool(options.plist)) + int(bool(options.defaults))
+    if number_of_options > 1:
         parser.print_usage()
-        errorAndExit("Error: The '--dsobject' and '--plist' options are mutually exclusive.")
+        errorAndExit("Error: The '--dsobject', '--plist', and '--defaults' options are mutually exclusive.")
 
-    if not options.dsobject and not options.plist:
+    if number_of_options == 0:
         parser.print_usage()
-        errorAndExit("Error: One of '--dsobject' or '--plist' must be specified.")
+        errorAndExit("Error: One of '--dsobject' or '--plist' or '--defaults' must be specified.")
 
     if options.dsobject and options.manage:
         print options.manage
         parser.print_usage()
         errorAndExit("Error: The '--manage' option is used only in conjunction with '--plist'. DS Objects already contain this information.")
 
+    if options.currentHost and not options.defaults:
+        parser.print_usage()
+        errorAndExit("Error: The '--currentHost' option is used only with '--defaults'.")
+
     if (not options.identifier and not options.identifier_from_profile) or \
     (options.identifier and options.identifier_from_profile):
         parser.print_usage()
-        sys.exit(-1)
+        errorAndExit("Error: identifier must be provided with either '--identifier' or '--identifier_from_profile'")
 
     if options.identifier:
         identifier = options.identifier
@@ -412,12 +444,13 @@ per-plist basis.""")
             errorAndExit("Error reading a profile at path %s" % options.identifier_from_profile)
         identifier, uuid = getIdentifierFromProfile(options.identifier_from_profile)
 
-    if options.plist:
+    if options.plist or options.defaults:
         if not options.manage:
             manage = 'Always'
         else:
             # ensure capitalization
             manage = options.manage[0].upper() + options.manage[1:].lower()
+
 
     if options.output:
         output_file = options.output
@@ -449,8 +482,16 @@ per-plist basis.""")
         # Each domain in the MCX blob gets its own payload
         for mcx_domain in mcx_data:
             newPayload.addPayloadFromMCX(mcx_domain)
+    if options.defaults:
+        for defaults_domain in options.defaults:
+            defaults_data = getDefaultsData(defaults_domain, options.currentHost)
+            newPayload.addPayloadFromPlistContents(defaults_data,
+                defaults_domain,
+                manage,
+                options.currentHost)
 
     newPayload.finalizeAndSave(output_file)
+
 
 
 if __name__ == "__main__":

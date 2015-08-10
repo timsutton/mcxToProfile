@@ -16,6 +16,14 @@ from Foundation import NSData, \
                        NSPropertyListMutableContainers, \
                        NSPropertyListXMLFormat_v1_0
 
+from CoreFoundation import CFPreferencesCopyKeyList, \
+    CFPreferencesCopyMultiple, \
+    kCFPreferencesCurrentUser, \
+    kCFPreferencesAnyUser, \
+    kCFPreferencesCurrentHost, \
+    kCFPreferencesAnyHost, \
+    kCFPreferencesCurrentApplication, \
+    kCFPreferencesAnyApplication
 
 class PayloadDict:
     """Class to create and manipulate Configuration Profiles.
@@ -310,25 +318,24 @@ def getMCXData(ds_object):
 
     return mcx_data
 
-def getDefaultsData(domain, current_host):
+def getDefaultsData(app_id, current_host):
     '''Returns the content of the defaults domain as an array or dict obejct.'''
-    cmd = ['/usr/bin/defaults', 'read', domain]
 
     if current_host:
-        cmd.insert(1, '-currentHost')
+        host_domain = kCFPreferencesCurrentHost
+    else:
+        host_domain = kCFPreferencesAnyHost
 
-    proc = subprocess.Popen(cmd, bufsize=1, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-    (pliststr, err) = proc.communicate()
-    if proc.returncode:
-        errorAndExit("defaults error: %s" % err)
-    # decode plist string returned by defaults
-    try:
-        defaults_dict = readPlistFromString(pliststr)
-    except FoundationPlistException:
-        errorAndExit(
-            "Could not decode plist data from defaults:\n" % pliststr)
-    return defaults_dict
+    user_domain = kCFPreferencesCurrentUser
+
+    allKeys = CFPreferencesCopyKeyList(app_id, user_domain, host_domain)
+    prefs_dict = CFPreferencesCopyMultiple(allKeys, app_id, user_domain, host_domain)
+    print prefs_dict
+
+    if len(prefs_dict) == 0:
+        errorAndExit("Error: no values found for app id: %s" % app_id)
+
+    return prefs_dict
 
 
 def getIdentifierFromProfile(profile_path):

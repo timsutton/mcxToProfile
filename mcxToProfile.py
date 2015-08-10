@@ -366,8 +366,8 @@ Examples: /Local/Default/Computers/foo
     parser.add_option('--plist', '-p', action="append", metavar='PLIST_FILE',
         help="""Path to a plist to be added as a profile payload.
 Can be specified multiple times.""")
-    parser.add_option('--defaults', action="append", metavar='DEFAULTS_DOMAIN',
-        help="""Default or preferences domain to be added as profile payload.
+    parser.add_option('--defaults', action="append", metavar='APP_ID',
+        help="""Default or preferences application id to be added as profile payload.
 Can be specified multiple times.""")
     parser.add_option('--identifier', '-i',
         action="store",

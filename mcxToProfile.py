@@ -318,20 +318,27 @@ def getMCXData(ds_object):
 
     return mcx_data
 
-def getDefaultsData(app_id, current_host):
+def getDefaultsData(app_id, current_host, any_user):
     '''Returns the content of the defaults domain as an array or dict obejct.'''
 
+    if app_id == "NSGlobalDomain":
+        app_id = kCFPreferencesAnyApplication
+    
     if current_host:
         host_domain = kCFPreferencesCurrentHost
     else:
         host_domain = kCFPreferencesAnyHost
 
-    user_domain = kCFPreferencesCurrentUser
+    if any_user:
+        user_domain = kCFPreferencesAnyUser
+    else:
+        user_domain = kCFPreferencesCurrentUser
 
     allKeys = CFPreferencesCopyKeyList(app_id, user_domain, host_domain)
     prefs_dict = CFPreferencesCopyMultiple(allKeys, app_id, user_domain, host_domain)
+    print app_id + user_domain + host_domain
     print prefs_dict
-
+    
     if len(prefs_dict) == 0:
         errorAndExit("Error: no values found for app id: %s" % app_id)
 
@@ -368,7 +375,7 @@ Examples: /Local/Default/Computers/foo
 Can be specified multiple times.""")
     parser.add_option('--defaults', action="append", metavar='APP_ID',
         help="""Default or preferences application id to be added as profile payload.
-Can be specified multiple times.""")
+Can be specified multiple times. User NSGlobalDomain to designate the global or 'anyApp' domain.""")
     parser.add_option('--identifier', '-i',
         action="store",
         help="""Top-level payload identifier. This is used to uniquely identify a profile.
@@ -380,10 +387,6 @@ A profile can be removed using this identifier using the 'profiles' command and 
 and UUID, as opposed to specifying it with the --identifier option.""")
 
     # Optionals
-    parser.add_option('--currentHost',
-        action="store_true",
-        default=False,
-        help="""When using the '--defaults' option this sets the '--currentHost' flag for the 'defaults' command.""" )
     parser.add_option('--removal-allowed', '-r',
         action="store_true",
         default=False,
@@ -409,10 +412,27 @@ If multiple plists are supplied, they are applied to all, not on a
 per-plist basis.""")
 
     parser.add_option_group(plist_options)
-
+    
     plist_options.add_option('--manage', '-m',
         action="store",
         help="Management frequency - Once, Often or Always. Defaults to Always.")
+
+    # Defaults specific
+    defaults_options = optparse.OptionGroup(parser,
+        title="Defaults-specific options",
+        description="""These options are useful only in conjunction with --defaults.
+        if multiple application ids are supplied they are applied to all.""" )
+    
+    parser.add_option_group(defaults_options)
+    
+    defaults_options.add_option('--currentHost',
+        action="store_true",
+        default=False,
+        help="""When using the '--defaults' option this sets the '--currentHost' flag for the 'defaults' command.""" )
+    defaults_options.add_option('--anyUser',
+        action="store_true",
+        default=False,
+        help="""When using the '--defaults' option this looks in the 'anyUser' domain, i.e. /Library/Preferences, rather than ~/Library/Preferences.""" )
 
     options, args = parser.parse_args()
 
@@ -437,6 +457,10 @@ per-plist basis.""")
     if options.currentHost and not options.defaults:
         parser.print_usage()
         errorAndExit("Error: The '--currentHost' option is used only with '--defaults'.")
+
+    if options.anyUser and not options.defaults:
+        parser.print_usage()
+        errorAndExit("Error: The '--anyUser' option is used only with '--defaults'.")
 
     if (not options.identifier and not options.identifier_from_profile) or \
     (options.identifier and options.identifier_from_profile):
@@ -491,7 +515,7 @@ per-plist basis.""")
             newPayload.addPayloadFromMCX(mcx_domain)
     if options.defaults:
         for defaults_domain in options.defaults:
-            defaults_data = getDefaultsData(defaults_domain, options.currentHost)
+            defaults_data = getDefaultsData(defaults_domain, options.currentHost, options.anyUser)
             newPayload.addPayloadFromPlistContents(defaults_data,
                 defaults_domain,
                 manage,

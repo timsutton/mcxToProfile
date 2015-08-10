@@ -16,6 +16,14 @@ from Foundation import NSData, \
                        NSPropertyListMutableContainers, \
                        NSPropertyListXMLFormat_v1_0
 
+from CoreFoundation import CFPreferencesCopyKeyList, \
+    CFPreferencesCopyMultiple, \
+    kCFPreferencesCurrentUser, \
+    kCFPreferencesAnyUser, \
+    kCFPreferencesCurrentHost, \
+    kCFPreferencesAnyHost, \
+    kCFPreferencesCurrentApplication, \
+    kCFPreferencesAnyApplication
 
 class PayloadDict:
     """Class to create and manipulate Configuration Profiles.
@@ -310,6 +318,32 @@ def getMCXData(ds_object):
 
     return mcx_data
 
+def getDefaultsData(app_id, current_host, any_user):
+    '''Returns the content of the defaults domain as an array or dict obejct.'''
+
+    if app_id == "NSGlobalDomain":
+        app_id = kCFPreferencesAnyApplication
+    
+    if current_host:
+        host_domain = kCFPreferencesCurrentHost
+    else:
+        host_domain = kCFPreferencesAnyHost
+
+    if any_user:
+        user_domain = kCFPreferencesAnyUser
+    else:
+        user_domain = kCFPreferencesCurrentUser
+
+    allKeys = CFPreferencesCopyKeyList(app_id, user_domain, host_domain)
+    prefs_dict = CFPreferencesCopyMultiple(allKeys, app_id, user_domain, host_domain)
+    print app_id + user_domain + host_domain
+    print prefs_dict
+    
+    if len(prefs_dict) == 0:
+        errorAndExit("Error: no values found for app id: %s" % app_id)
+
+    return prefs_dict
+
 
 def getIdentifierFromProfile(profile_path):
     """Return a tuple containing the PayloadIdentifier and PayloadUUID from the
@@ -326,9 +360,9 @@ def getIdentifierFromProfile(profile_path):
 def main():
     parser = optparse.OptionParser()
     parser.set_usage(
-        """usage: %prog [--dsobject DSOBJECT | --plist PLIST] 
+        """usage: %prog [--dsobject DSOBJECT | --plist PLIST | --defaults DOMAIN]
                        [--identifier IDENTIFIER | --identifier-from-profile PATH] [options]
-       One of '--dsobject' or '--plist' must be specified, and only one identifier option.
+       One of '--dsobject', '--plist', or '--defaults' must be specified, and only one identifier option.
        Run '%prog --help' for more information.""")
 
     # Required options
@@ -339,6 +373,9 @@ Examples: /Local/Default/Computers/foo
     parser.add_option('--plist', '-p', action="append", metavar='PLIST_FILE',
         help="""Path to a plist to be added as a profile payload.
 Can be specified multiple times.""")
+    parser.add_option('--defaults', action="append", metavar='APP_ID',
+        help="""Default or preferences application id to be added as profile payload.
+Can be specified multiple times. User NSGlobalDomain to designate the global or 'anyApp' domain.""")
     parser.add_option('--identifier', '-i',
         action="store",
         help="""Top-level payload identifier. This is used to uniquely identify a profile.
@@ -375,7 +412,7 @@ If multiple plists are supplied, they are applied to all, not on a
 per-plist basis.""")
 
     parser.add_option_group(plist_options)
-
+    
     plist_options.add_option('--manage', '-m',
         action="store",
         help=("Management frequency - 'Once' or 'Always'. Defaults to "
@@ -383,29 +420,55 @@ per-plist basis.""")
               "due to its having undesirable effects on clients running "
               "Yosemite."))
 
+    # Defaults specific
+    defaults_options = optparse.OptionGroup(parser,
+        title="Defaults-specific options",
+        description="""These options are useful only in conjunction with --defaults.
+        if multiple application ids are supplied they are applied to all.""" )
+    
+    parser.add_option_group(defaults_options)
+    
+    defaults_options.add_option('--currentHost',
+        action="store_true",
+        default=False,
+        help="""When using the '--defaults' option this sets the '--currentHost' flag for the 'defaults' command.""" )
+    defaults_options.add_option('--anyUser',
+        action="store_true",
+        default=False,
+        help="""When using the '--defaults' option this looks in the 'anyUser' domain, i.e. /Library/Preferences, rather than ~/Library/Preferences.""" )
+
     options, args = parser.parse_args()
 
     if len(args):
         parser.print_usage()
         sys.exit(-1)
 
-    if options.dsobject and options.plist:
+    number_of_options = int(bool(options.dsobject)) + int(bool(options.plist)) + int(bool(options.defaults))
+    if number_of_options > 1:
         parser.print_usage()
-        errorAndExit("Error: The '--dsobject' and '--plist' options are mutually exclusive.")
+        errorAndExit("Error: The '--dsobject', '--plist', and '--defaults' options are mutually exclusive.")
 
-    if not options.dsobject and not options.plist:
+    if number_of_options == 0:
         parser.print_usage()
-        errorAndExit("Error: One of '--dsobject' or '--plist' must be specified.")
+        errorAndExit("Error: One of '--dsobject' or '--plist' or '--defaults' must be specified.")
 
     if options.dsobject and options.manage:
         print options.manage
         parser.print_usage()
         errorAndExit("Error: The '--manage' option is used only in conjunction with '--plist'. DS Objects already contain this information.")
 
+    if options.currentHost and not options.defaults:
+        parser.print_usage()
+        errorAndExit("Error: The '--currentHost' option is used only with '--defaults'.")
+
+    if options.anyUser and not options.defaults:
+        parser.print_usage()
+        errorAndExit("Error: The '--anyUser' option is used only with '--defaults'.")
+
     if (not options.identifier and not options.identifier_from_profile) or \
     (options.identifier and options.identifier_from_profile):
         parser.print_usage()
-        sys.exit(-1)
+        errorAndExit("Error: identifier must be provided with either '--identifier' or '--identifier_from_profile'")
 
     if options.identifier:
         identifier = options.identifier
@@ -415,7 +478,7 @@ per-plist basis.""")
             errorAndExit("Error reading a profile at path %s" % options.identifier_from_profile)
         identifier, uuid = getIdentifierFromProfile(options.identifier_from_profile)
 
-    if options.plist:
+    if options.plist or options.defaults:
         if not options.manage:
             manage = 'Always'
         else:
@@ -429,6 +492,7 @@ per-plist basis.""")
              "Yosemite. \n"
              "         Consider using 'Once' instead, and see this repo's "
              "README for links to more documentation.")
+
 
     if options.output:
         output_file = options.output
@@ -460,8 +524,16 @@ per-plist basis.""")
         # Each domain in the MCX blob gets its own payload
         for mcx_domain in mcx_data:
             newPayload.addPayloadFromMCX(mcx_domain)
+    if options.defaults:
+        for defaults_domain in options.defaults:
+            defaults_data = getDefaultsData(defaults_domain, options.currentHost, options.anyUser)
+            newPayload.addPayloadFromPlistContents(defaults_data,
+                defaults_domain,
+                manage,
+                options.currentHost)
 
     newPayload.finalizeAndSave(output_file)
+
 
 
 if __name__ == "__main__":

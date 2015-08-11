@@ -10,20 +10,19 @@ import optparse
 import subprocess
 import re
 from uuid import uuid4
-from Foundation import NSDate
 from Foundation import NSData, \
+                       NSDate, \
                        NSPropertyListSerialization, \
                        NSPropertyListMutableContainers, \
-                       NSPropertyListXMLFormat_v1_0
-
-from CoreFoundation import CFPreferencesCopyKeyList, \
-    CFPreferencesCopyMultiple, \
-    kCFPreferencesCurrentUser, \
-    kCFPreferencesAnyUser, \
-    kCFPreferencesCurrentHost, \
-    kCFPreferencesAnyHost, \
-    kCFPreferencesCurrentApplication, \
-    kCFPreferencesAnyApplication
+                       NSPropertyListXMLFormat_v1_0, \
+                       CFPreferencesCopyKeyList, \
+                       CFPreferencesCopyMultiple, \
+                       kCFPreferencesCurrentUser, \
+                       kCFPreferencesAnyUser, \
+                       kCFPreferencesCurrentHost, \
+                       kCFPreferencesAnyHost, \
+                       kCFPreferencesCurrentApplication, \
+                       kCFPreferencesAnyApplication
 
 class PayloadDict:
     """Class to create and manipulate Configuration Profiles.
@@ -323,7 +322,7 @@ def getDefaultsData(app_id, current_host, any_user):
 
     if app_id == "NSGlobalDomain":
         app_id = kCFPreferencesAnyApplication
-    
+
     if current_host:
         host_domain = kCFPreferencesCurrentHost
     else:
@@ -336,9 +335,7 @@ def getDefaultsData(app_id, current_host, any_user):
 
     allKeys = CFPreferencesCopyKeyList(app_id, user_domain, host_domain)
     prefs_dict = CFPreferencesCopyMultiple(allKeys, app_id, user_domain, host_domain)
-    print app_id + user_domain + host_domain
-    print prefs_dict
-    
+
     if len(prefs_dict) == 0:
         errorAndExit("Error: no values found for app id: %s" % app_id)
 
@@ -412,7 +409,7 @@ If multiple plists are supplied, they are applied to all, not on a
 per-plist basis.""")
 
     parser.add_option_group(plist_options)
-    
+
     plist_options.add_option('--manage', '-m',
         action="store",
         help=("Management frequency - 'Once' or 'Always'. Defaults to "
@@ -425,9 +422,9 @@ per-plist basis.""")
         title="Defaults-specific options",
         description="""These options are useful only in conjunction with --defaults.
         if multiple application ids are supplied they are applied to all.""" )
-    
+
     parser.add_option_group(defaults_options)
-    
+
     defaults_options.add_option('--currentHost',
         action="store_true",
         default=False,

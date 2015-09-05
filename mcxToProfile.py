@@ -524,10 +524,12 @@ per-plist basis.""")
     if options.defaults:
         for defaults_domain in options.defaults:
             defaults_data = getDefaultsData(defaults_domain, options.currentHost, options.anyUser)
+            isByHost = options.currentHost and not options.anyUser
+
             newPayload.addPayloadFromPlistContents(defaults_data,
                 defaults_domain,
                 manage,
-                options.currentHost)
+                isByHost)
 
     newPayload.finalizeAndSave(output_file)
 

@@ -465,7 +465,7 @@ per-plist basis.""")
     if (not options.identifier and not options.identifier_from_profile) or \
     (options.identifier and options.identifier_from_profile):
         parser.print_usage()
-        errorAndExit("Error: identifier must be provided with either '--identifier' or '--identifier_from_profile'")
+        errorAndExit("Error: identifier must be provided with either '--identifier' or '--identifier-from-profile'")
 
     if options.identifier:
         identifier = options.identifier

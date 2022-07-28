@@ -4,6 +4,8 @@
 # Simple utility to assist with creating Custom Settings Configuration Profiles
 # from plist files and Directory Services nodes
 
+from __future__ import print_function
+
 import sys
 import os
 import optparse
@@ -67,7 +69,7 @@ class PayloadDict:
         PayloadContent dict within the payload. Handles the boilerplate, naming and descriptive
         elements.
         """
-        domains = payload_content_dict.keys()
+        domains = list(payload_content_dict.keys())
         if len(domains) == 1:
             domain = domains[0]
             self.data['PayloadDescription'] += "%s\n" % domain
@@ -121,7 +123,6 @@ class PayloadDict:
         if manage == 'Once':
             now = NSDate.new()
             payload_dict[domain][state][0]['mcx_data_timestamp'] = now
-
         self._addPayload(payload_dict)
 
     def addPayloadFromMCX(self, mcxdata):
@@ -143,7 +144,7 @@ def makeNewUUID():
 
 
 def errorAndExit(errmsg):
-    print >> sys.stderr, errmsg
+    print(errmsg, file=sys.stderr)
     exit(-1)
 
 
@@ -450,7 +451,7 @@ per-plist basis.""")
         errorAndExit("Error: One of '--dsobject' or '--plist' or '--defaults' must be specified.")
 
     if options.dsobject and options.manage:
-        print options.manage
+        print(options.manage)
         parser.print_usage()
         errorAndExit("Error: The '--manage' option is used only in conjunction with '--plist'. DS Objects already contain this information.")
 
@@ -483,12 +484,11 @@ per-plist basis.""")
     else:
         manage = None
     if manage == 'Often':
-        print >> sys.stderr, \
-            ("WARNING: Deploying profiles configured for 'Often' settings "
+        print(("WARNING: Deploying profiles configured for 'Often' settings "
              "management is known to have undesirable effects on OS X "
              "Yosemite. \n"
              "         Consider using 'Once' instead, and see this repo's "
-             "README for links to more documentation.")
+             "README for links to more documentation."), file=sys.stderr)
 
 
     if options.output:

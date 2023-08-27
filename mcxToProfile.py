@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/local/munkireport/munkireport-python2
 
 # mcxToProfile.py
 # Simple utility to assist with creating Custom Settings Configuration Profiles

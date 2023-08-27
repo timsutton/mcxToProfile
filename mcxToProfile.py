@@ -1,8 +1,10 @@
-#!/usr/bin/python
+#!/usr/local/munkireport/munkireport-python2
 
 # mcxToProfile.py
 # Simple utility to assist with creating Custom Settings Configuration Profiles
 # from plist files and Directory Services nodes
+
+from __future__ import print_function
 
 import sys
 import os
@@ -62,12 +64,12 @@ class PayloadDict:
         # An empty list for 'sub payloads' that we'll fill later
         self.data['PayloadContent'] = []
 
-    def _addPayload(self, payload_content_dict, payload_type=None):
+    def _addPayload(self, payload_content_dict):
         """Add a Custom Settings payload to the profile. Takes a dict which will be the
         PayloadContent dict within the payload. Handles the boilerplate, naming and descriptive
         elements.
         """
-        domains = payload_content_dict.keys()
+        domains = list(payload_content_dict.keys())
         if len(domains) == 1:
             domain = domains[0]
             self.data['PayloadDescription'] += "%s\n" % domain
@@ -80,15 +82,10 @@ class PayloadDict:
         payload_dict['PayloadVersion'] = 1
         payload_dict['PayloadUUID'] = makeNewUUID()
         payload_dict['PayloadEnabled'] = True
+        payload_dict['PayloadType'] = 'com.apple.ManagedClient.preferences'
         payload_dict['PayloadIdentifier'] = "%s.%s.alacarte.customsettings.%s" % (
                                             'MCXToProfile', self.data['PayloadUUID'], payload_dict['PayloadUUID'])
 
-        # Allow for custom PayloadTypes. With macOS 10.13 UAMDM introduced new PayloadType of 'com.apple.syspolicy.kernel-extension-policy'. More surely to follow.
-        if payload_type is None:
-            payload_dict['PayloadType'] = 'com.apple.ManagedClient.preferences'
-        else:
-            payload_dict['PayloadType'] = payload_type
-        
         # Update the top-level descriptive info
         if self.data['PayloadDisplayName'] == '':
             self.data['PayloadDisplayName'] = 'MCXToProfile: %s' % domain
@@ -99,7 +96,7 @@ class PayloadDict:
         # Add to the profile's PayloadContent array
         self.data['PayloadContent'].append(payload_dict)
 
-    def addPayloadFromPlistContents(self, plist_dict, domain, manage, payload_type, is_byhost=False):
+    def addPayloadFromPlistContents(self, plist_dict, domain, manage, is_byhost=False):
         """Add one plist dict contents to the profile's payloads. domain is the
         preferences domain (ie. com.apple.finder), manage is one of 'Once', 'Often' or 'Always',
         and is_byhost is a boolean representing whether the preference is to be used as a ByHost.
@@ -126,14 +123,13 @@ class PayloadDict:
         if manage == 'Once':
             now = NSDate.new()
             payload_dict[domain][state][0]['mcx_data_timestamp'] = now
-
-        self._addPayload(payload_dict, payload_type)
+        self._addPayload(payload_dict)
 
     def addPayloadFromMCX(self, mcxdata):
         """Add MCX data to the profile's payloads.
         """
         # MCX is already 'configured', we just need to add the dict to the payload
-        self._addPayload(mcxdata, payload_type)
+        self._addPayload(mcxdata)
 
     def finalizeAndSave(self, output_path):
         """Perform last modifications and save to an output plist.
@@ -148,7 +144,7 @@ def makeNewUUID():
 
 
 def errorAndExit(errmsg):
-    print >> sys.stderr, errmsg
+    print(errmsg, file=sys.stderr)
     exit(-1)
 
 
@@ -363,7 +359,7 @@ def main():
     parser = optparse.OptionParser()
     parser.set_usage(
         """usage: %prog [--dsobject DSOBJECT | --plist PLIST | --defaults DOMAIN]
-                       [--identifier IDENTIFIER | --identifier-from-profile PATH] [--payloadtype PAYLOADTYPE] [options]
+                       [--identifier IDENTIFIER | --identifier-from-profile PATH] [options]
        One of '--dsobject', '--plist', or '--defaults' must be specified, and only one identifier option.
        Run '%prog --help' for more information.""")
 
@@ -405,10 +401,6 @@ and UUID, as opposed to specifying it with the --identifier option.""")
         action="store",
         default="",
         help="Display name for profile. Defaults to 'MCXToProfile: <first domain>'.")
-    parser.add_option('--payloadtype',
-        action="store",
-        default="com.apple.ManagedClient.preferences",
-        help="Specifies a specific PayloadType.  com.apple.ManagedClient.preferences is default.")
 
     # Plist-specific
     plist_options = optparse.OptionGroup(parser,
@@ -459,7 +451,7 @@ per-plist basis.""")
         errorAndExit("Error: One of '--dsobject' or '--plist' or '--defaults' must be specified.")
 
     if options.dsobject and options.manage:
-        print options.manage
+        print(options.manage)
         parser.print_usage()
         errorAndExit("Error: The '--manage' option is used only in conjunction with '--plist'. DS Objects already contain this information.")
 
@@ -492,21 +484,17 @@ per-plist basis.""")
     else:
         manage = None
     if manage == 'Often':
-        print >> sys.stderr, \
-            ("WARNING: Deploying profiles configured for 'Often' settings "
+        print(("WARNING: Deploying profiles configured for 'Often' settings "
              "management is known to have undesirable effects on OS X "
              "Yosemite. \n"
              "         Consider using 'Once' instead, and see this repo's "
-             "README for links to more documentation.")
+             "README for links to more documentation."), file=sys.stderr)
 
 
     if options.output:
         output_file = options.output
     else:
         output_file = os.path.join(os.getcwd(), identifier + '.mobileconfig')
-
-    if options.payloadtype:
-        payload_type = options.payloadtype
 
     newPayload = PayloadDict(identifier=identifier,
         uuid=uuid,
@@ -527,7 +515,6 @@ per-plist basis.""")
             newPayload.addPayloadFromPlistContents(source_data,
                 source_domain['name'],
                 manage,
-                payload_type,
                 is_byhost=source_domain['is_byhost'])
     if options.dsobject:
         mcx_data = getMCXData(options.dsobject)
@@ -542,7 +529,6 @@ per-plist basis.""")
             newPayload.addPayloadFromPlistContents(defaults_data,
                 defaults_domain,
                 manage,
-                payload_type,
                 isByHost)
 
     newPayload.finalizeAndSave(output_file)

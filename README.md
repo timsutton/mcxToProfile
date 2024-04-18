@@ -8,6 +8,13 @@ Administrators who would like to move from MCX-based management to Profiles may 
 
 mcxToProfile should function on OS X 10.5 or greater. It also makes use of Greg Neagle's FoundationPlist library from the Munki project, which provides native plist support via PyObjC. FoundationPlist is licensed under the Apache License, version 2.0.
 
+## Install instructions
+
+* Ensure Xcode is installed on your Mac
+* `git clone https://github.com/timsutton/mcxToProfile.git && cd mcxToProfile`
+* `pip3 install pyobjc`
+* `./mcxToProfile.py --help`
+
 ## Example usage
 
 Here's an example:
